@@ -4,6 +4,10 @@
 
 node {
 
+    stage('gitClean') {
+        gitClean()
+    }
+
     stage("mkdtemp") {
        def x = mkdtemp('cd-')
        println "${x}"
