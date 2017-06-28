@@ -1,6 +1,14 @@
-@Library('common') _
-// import static common.Utils.*
+#!/usr/bin/groovy
 
+@Library('common') _
+
+/*
+    Sample Pipeline used to test shared library code (/vars/*.groovy)
+    and to document functions added by it.
+
+    To import lastest shared library, just use @Library block above.
+
+*/
 
 node {
 
@@ -21,8 +29,25 @@ node {
 
     stage("sh2") {
         withEnv(["MAX_LINES=2"]) {
-            sh2 "seq 5" // should display 1,2,4,5 (missing 3) and output.log
-            sh2 "true" // should generate output-2.log
+
+            // should display 1,2,4,5 (missing 3) and output.log
+            def result = sh2 script: "seq 5; exit 200", returnStatus: true
+            print "[${result}]"
+            if (result != 200) currentBuild.result = 'FAILURE'
+
+            // should generate output-1.log
+            sh2 "set"
+
+            // this should not generate a log file or limit the output due
+            // to returnStdout: true
+            result = sh2 script: "seq 5", returnStdout: true
+            print "[${result}]"
+            // normalize output
+            result = result.replaceAll('\\r\\n?', '\n').trim()
+            if (result != '1\n2\n3\n4\n5') currentBuild.result = 'FAILURE'
+
+            // currently you need to archive log manually, but next sh2()
+            // version will take care of that
             archiveArtifacts artifacts: '*.log'
         }
     }
