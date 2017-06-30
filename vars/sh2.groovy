@@ -15,8 +15,6 @@
   Degrades gracedully: Unless you use the newly added parameters your
   pipeline code would work even when the new sh() is not loaded.
 
-  You need to remember to collect *.log yourself with archiveArtifacts
-
   TODO:
   - make it transparent by replacing original sh()
 
@@ -53,7 +51,7 @@ def call(Map cmd) {
         n=
         set -C
         until
-          file=$1${n:+-$n}.log
+          file=$1${n:+-$n}.log.gz
           [[ ! -f "$file" ]]
         do
           ((n++))
@@ -75,7 +73,7 @@ def call(Map cmd) {
       set -eo pipefail
 
       ( ''' + cmd['script'] + ''' ) 2>&1 | \
-          tee ''' + LOG_FILENAME + ''' | \
+          tee >(gzip -9 --stdout >> ''' + LOG_FILENAME + ''') | \
           stdbuf -i0 -o0 -e0 awk -v offset=${MAX_LINES:-200} \
           '{
                if (NR <= offset) print;
